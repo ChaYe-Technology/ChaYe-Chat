@@ -1,37 +1,84 @@
 use dioxus::prelude::*;
+use reqwest::Client;
+use serde::Deserialize;
+use serde_json::json;
 
-const FAVICON: Asset = asset!("/assets/favicon.ico");
-const MAIN_CSS: Asset = asset!("/assets/main.css");
-const HEADER_SVG: Asset = asset!("/assets/header.svg");
+#[derive(Deserialize)]
+struct ApiResponse {
+    choices: Vec<Choice>,
+}
+
+#[derive(Deserialize)]
+struct Choice {
+    message: Message,
+}
+
+#[derive(Deserialize)]
+struct Message {
+    content: String,
+}
 
 fn main() {
-    dioxus::launch(App);
+    launch(App);
 }
 
 #[component]
 fn App() -> Element {
-    rsx! {
-        document::Link { rel: "icon", href: FAVICON }
-        document::Link { rel: "stylesheet", href: MAIN_CSS }
-        Hero {}
+    let api_key = "API-KEY";
+    let model = "gpt-4.1-2025-04-14";
 
-    }
-}
-
-#[component]
-pub fn Hero() -> Element {
+    let mut message = use_signal(|| None as Option<String>);
     rsx! {
         div {
-            id: "hero",
-            img { src: HEADER_SVG, id: "header" }
-            div { id: "links",
-                a { href: "https://dioxuslabs.com/learn/0.6/", "📚 Learn Dioxus" }
-                a { href: "https://dioxuslabs.com/awesome", "🚀 Awesome Dioxus" }
-                a { href: "https://github.com/dioxus-community/", "📡 Community Libraries" }
-                a { href: "https://github.com/DioxusLabs/sdk", "⚙️ Dioxus Development Kit" }
-                a { href: "https://marketplace.visualstudio.com/items?itemName=DioxusLabs.dioxus", "💫 VSCode Extension" }
-                a { href: "https://discord.gg/XgGxMSkvUM", "👋 Community Discord" }
+            button {
+                onclick: move |_| {
+                    message.set(None);
+                    spawn({
+                        let mut message = message.clone();
+                        async move {
+                            match call_openai(api_key, model).await {
+                                Ok(msg) => message.set(Some(msg)),
+                                Err(msg) => message.set(Some(format!("Error: {}", msg))),
+                            }
+                        }
+                    });
+                },
+                "Test OpenAI"
+            }
+            
+            if let Some(msg) = message.read().as_ref() {
+                div { "{msg}" }
             }
         }
     }
+}
+
+async fn call_openai(api_key: &str, model: &str) -> Result<String, String> {
+    let client = Client::new();
+
+    let res = client
+        .post("https://api.openai.com/v1/chat/completions")
+        .header("Authorization", format!("Bearer {}", api_key))
+        .header("Content-Type", "application/json")
+        .json(&json!({
+            "model": model,
+            "messages": [
+                {"role": "user", "content": "Hi, what is 1 + 1?"}
+            ],
+            "max_tokens": 500
+        }))
+        .send()
+        .await
+        .map_err(|error| error.to_string())?;
+
+    let api_response: ApiResponse = res
+        .json()
+        .await
+        .map_err(|error| error.to_string())?;
+
+    api_response
+        .choices
+        .first()
+        .map(|choice| choice.message.content.clone())
+        .ok_or_else(|| "No Rsponse".to_string())
 }
