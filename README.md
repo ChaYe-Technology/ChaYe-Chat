@@ -1,25 +1,17 @@
-# Development
+# ChaYe Chat
 
-Your new bare-bones project includes minimal organization with a single `main.rs` file and a few assets.
+### Purpose
+A project aimed at creating a easy to use, and stylistically simple, LLM API interaction application that allows 
+users to input their own API keys to use state of the art models without subscribing to a dozen different models
+that costs upwards of $20 each.
 
-```
-project/
-├─ assets/ # Any assets that are used by the app should be placed here
-├─ src/
-│  ├─ main.rs # main.rs is the entry point to your application and currently contains all components for the app
-├─ Cargo.toml # The Cargo.toml file defines the dependencies and feature flags for your project
-```
+### Reason
+Having used LLMs extensively, I was personally ok with paying $20 for a single subscription. However, as each
+model has different strengths and weaknesses, I didn't want to be stuck buying into a single company's
+subscription. Having tried utilizing APIs and local models for other projects, the idea of a standalone AI app
+that can interact with all potential state of the art models sounded appealing to me. Plus, having an app to 
+replace the keybinding for my Copilot button on my laptop is another bonus.
 
-### Serving Your App
-
-Run the following command in the root of your project to start developing with the default platform:
-
-```bash
-dx serve
-```
-
-To run for a different platform, use the `--platform platform` flag. E.g.
-```bash
-dx serve --platform desktop
-```
-
+### Tech Stack
+This project utilizes the Rust language and Dioxus for the GUI. With no official crates for OpenAI, Anthropic,
+Gemini, or Deepseek, this project would utilize Reqwest to use the APIs.
