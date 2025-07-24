@@ -1,4 +1,4 @@
-# ChaYe Chat
+# ChaYe Chat (Work in Progress)
 
 ### Purpose
 A project aimed at creating a easy to use, and stylistically simple, LLM API interaction application that allows 
