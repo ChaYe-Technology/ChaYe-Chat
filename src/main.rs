@@ -1,22 +1,8 @@
 use dioxus::prelude::*;
-use reqwest::Client;
-use serde::Deserialize;
-use serde_json::json;
 
-#[derive(Deserialize)]
-struct ApiResponse {
-    choices: Vec<Choice>,
-}
-
-#[derive(Deserialize)]
-struct Choice {
-    message: Message,
-}
-
-#[derive(Deserialize)]
-struct Message {
-    content: String,
-}
+mod api_openai;
+mod api_anthropic;
+mod api_deepseek;
 
 fn main() {
     launch(App);
@@ -24,17 +10,34 @@ fn main() {
 
 #[component]
 fn App() -> Element {
-    let api_key = "API-Key";
-    let model = "gpt-4.1-2025-04-14";
+    let openai_api_key = "OpenAI API Key";
+    let openai_model = "o4-mini-2025-04-16";
 
-    let mut response = use_signal(|| None as Option<String>);
+    let deepseek_api_key = "Deepseek API Key";
+    let deepseek_model = "deepseek-reasoner";
+
+    let anthropic_api_key = "Anthropic API Key";
+    let anthropic_model = "claude-opus-4-20250514";
+
+    let mut conversation = use_signal(|| false);
     let mut prompt = use_signal(|| String::new());
+    let mut response = use_signal(|| None as Option<String>);
+
     rsx! {
         div {
             input {  
                 type: "text",
                 oninput: move |event| prompt.set(event.value().to_string())
             }
+            "Conversation Mode"
+            input {
+                type: "checkbox",
+                oninput: move |event| conversation.set(event.value() == "true")
+            }
+            "{conversation()}"
+        }
+
+        div {
             button {
                 onclick: move |_| {
                     response.set(None);
@@ -42,7 +45,7 @@ fn App() -> Element {
                     spawn({
                         let mut response = response.clone();
                         async move {
-                            match call_openai(api_key, model, &prompt).await {
+                            match api_openai::call_openai(openai_api_key, openai_model, &prompt).await {
                                 Ok(res) => response.set(Some(res)),
                                 Err(res) => response.set(Some(format!("Error: {}", res)))
                             }
@@ -51,40 +54,44 @@ fn App() -> Element {
                 },
                 "Test OpenAI"
             }
+
+            button {
+                onclick: move |_| {
+                    response.set(None);
+                    let prompt = prompt().clone();
+                    spawn({
+                        let mut response = response.clone();
+                        async move {
+                            match api_deepseek::call_deepseek(deepseek_api_key, deepseek_model, &prompt).await {
+                                Ok(res) => response.set(Some(res)),
+                                Err(res) => response.set(Some(format!("Error: {}", res)))
+                            }
+                        }
+                    });
+                },
+                "Test Deepseek"
+            }
+
+            button {
+                onclick: move |_| {
+                    response.set(None);
+                    let prompt = prompt().clone();
+                    spawn({
+                        let mut response = response.clone();
+                        async move {
+                            match api_anthropic::call_anthropic(anthropic_api_key, anthropic_model, &prompt).await {
+                                Ok(res) => response.set(Some(res)),
+                                Err(res) => response.set(Some(format!("Error: {}", res)))
+                            }
+                        }
+                    });
+                },
+                "Test Anthropic"
+            }
             
             if let Some(msg) = response() {
                 div { "{msg}" }
             }
         }
     }
-}
-
-async fn call_openai(api_key: &str, model: &str, prompt: &str) -> Result<String, String> {
-    let client = Client::new();
-
-    let res = client
-        .post("https://api.openai.com/v1/chat/completions")
-        .header("Authorization", format!("Bearer {}", api_key))
-        .header("Content-Type", "application/json")
-        .json(&json!({
-            "model": model,
-            "messages": [
-                {"role": "user", "content": prompt}
-            ],
-            "max_tokens": 500
-        }))
-        .send()
-        .await
-        .map_err(|error| error.to_string())?;
-
-    let api_response: ApiResponse = res
-        .json()
-        .await
-        .map_err(|error| error.to_string())?;
-
-    api_response
-        .choices
-        .first()
-        .map(|choice| choice.message.content.clone())
-        .ok_or_else(|| "No Rsponse".to_string())
 }
