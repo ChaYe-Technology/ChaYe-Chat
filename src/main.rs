@@ -12,6 +12,7 @@ fn main() {
 fn App() -> Element {
     let openai_api_key = "OpenAI API Key";
     let openai_model = "o4-mini-2025-04-16";
+    let openai_path = "assets/convo/openai/convo2.json";
 
     let deepseek_api_key = "Deepseek API Key";
     let deepseek_model = "deepseek-reasoner";
@@ -19,7 +20,6 @@ fn App() -> Element {
     let anthropic_api_key = "Anthropic API Key";
     let anthropic_model = "claude-opus-4-20250514";
 
-    let mut conversation = use_signal(|| false);
     let mut prompt = use_signal(|| String::new());
     let mut response = use_signal(|| None as Option<String>);
 
@@ -29,12 +29,6 @@ fn App() -> Element {
                 type: "text",
                 oninput: move |event| prompt.set(event.value().to_string())
             }
-            "Conversation Mode"
-            input {
-                type: "checkbox",
-                oninput: move |event| conversation.set(event.value() == "true")
-            }
-            "{conversation()}"
         }
 
         div {
@@ -45,7 +39,7 @@ fn App() -> Element {
                     spawn({
                         let mut response = response.clone();
                         async move {
-                            match api_openai::call_openai(openai_api_key, openai_model, &prompt).await {
+                            match api_openai::call_openai(openai_api_key, openai_model, &prompt, openai_path, true).await {
                                 Ok(res) => response.set(Some(res)),
                                 Err(res) => response.set(Some(format!("Error: {}", res)))
                             }

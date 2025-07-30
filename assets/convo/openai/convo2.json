@@ -1,0 +1,13 @@
+{
+  "model": "o4-mini-2025-04-16",
+  "messages": [
+    {
+      "role": "user",
+      "content": "hello, what model are you"
+    },
+    {
+      "role": "assistant",
+      "content": "Hello! I’m ChatGPT, a large language model developed by OpenAI based on the GPT-4 architecture. How can I help you today?"
+    }
+  ]
+}

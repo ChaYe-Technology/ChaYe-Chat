@@ -1,0 +1,45 @@
+{
+  "model": "o4-mini-2025-04-16",
+  "messages": [
+    {
+      "role": "user",
+      "content": "hello, my name is Bob"
+    },
+    {
+      "role": "assistant",
+      "content": "Hello Bob! It’s nice to meet you. How can I help you today?"
+    },
+    {
+      "role": "user",
+      "content": "what is my name"
+    },
+    {
+      "role": "assistant",
+      "content": "Your name is Bob."
+    },
+    {
+      "role": "user",
+      "content": "what is 1 + 1"
+    },
+    {
+      "role": "assistant",
+      "content": "1 + 1 = 2."
+    },
+    {
+      "role": "user",
+      "content": "what question did i just ask"
+    },
+    {
+      "role": "assistant",
+      "content": "You just asked: “What is 1 + 1?”"
+    },
+    {
+      "role": "user",
+      "content": "what is my name"
+    },
+    {
+      "role": "assistant",
+      "content": "Your name is Bob."
+    }
+  ]
+}
