@@ -1,5 +1,13 @@
+use dioxus::prelude::*;
 use reqwest::Client;
 use serde_json::json;
+
+#[component]
+pub fn gui_deepseek() -> Element {
+    rsx!{
+        div { "Deepseek" }
+    }
+}
 
 pub async fn call_deepseek(api_key: &str, model: &str, prompt: &str) -> Result<String, String> {
     let client = Client::new();

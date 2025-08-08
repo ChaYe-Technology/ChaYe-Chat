@@ -1,5 +1,13 @@
+use dioxus::prelude::*;
 use reqwest::Client;
 use serde_json::json;
+
+#[component]
+pub fn gui_anthropic() -> Element {
+    rsx!{
+        div { "Anthropic" }
+    }
+}
 
 pub async fn call_anthropic(api_key: &str, model: &str, prompt: &str) -> Result<String, String> {
     let client = Client::new();
