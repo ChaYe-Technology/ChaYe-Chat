@@ -1,53 +1,223 @@
 use dioxus::prelude::*;
 use reqwest::Client;
+use serde::Deserialize;
 use serde_json::{Value, json};
 use std::fs;
 use futures::StreamExt;
 
+#[derive(Deserialize)]
+struct ConvoStruct {
+    file: String,
+    title: String,
+    model: String,
+    new: bool
+}
+
+#[derive(Deserialize)]
+struct ConvoStructVec {
+    conversations: Vec<ConvoStruct>
+}
+
+#[derive(Deserialize)]
+struct MsgStruct {
+    role: String,
+    content: String
+}
+
+#[derive(Deserialize)]
+struct MsgStructVec {
+    messages: Vec<MsgStruct>
+}
+
 #[component]
 pub fn gui_openai() -> Element {
+    // Get API key
     let data = fs::read_to_string("assets/api_key.json")?;
     let json_data: Value = serde_json::from_str(&data)?;
     let openai_api_key = json_data["OpenAI"].as_str().unwrap().to_string();
-    let openai_model = "o4-mini-2025-04-16";
-    let openai_path = "assets/convo/openai/convo2.json";
 
-    let mut prompt = use_signal(|| String::new());
+    // Models
+    let openai_model_lis = vec![
+        "gpt-5-nano-2025-08-07", 
+        "gpt-5-2025-08-07",
+        "o4-mini-2025-04-16",
+        "o3-2025-04-16"
+    ];
+    let mut openai_model = use_signal(|| openai_model_lis[0]);
+
+    let mut input = use_signal(|| String::new());
     let mut response = use_signal(|| None as Option<String>);
+    let mut streaming = use_signal(|| false); 
+
+    let convo_lis = table_openai();
+    let mut convo_idx = use_signal(|| 0);
+
+    let convo_cur: Vec<MsgStruct> = if convo_lis[convo_idx()].new == false {
+        let path = convo_lis[convo_idx()].file.clone();
+        let data = fs::read_to_string(path)?;
+        let json_data: MsgStructVec = serde_json::from_str(&data)?;
+        json_data.messages
+    } else {
+        Vec::new()
+    };
+
     rsx!{
-        div { "OpenAI" }
-        div {  
-            input {  
-                type: "text",
-                oninput: move |event| prompt.set(event.value().to_string())
+        div {
+            display: "flex",
+            flex_direction: "column",
+            background_color: "lightgreen",
+            padding: "10px",
+
+            // Header and Model Selector
+            div {
+                background_color: "lightblue",
+                padding: "10px",
+                div { "OpenAI" }
             }
 
-            button {
-                onclick: move |_| {
-                    response.set(None);
-                    let prompt = prompt().clone();
-                    let api_key = openai_api_key.clone();
-                    spawn({
-                        let mut response = response.clone();
-                        async move {
-                            match call_openai(response, &api_key, openai_model, &prompt, openai_path, true).await {
-                                Ok(_) => (),
-                                Err(res) => response.set(Some(format!("Error: {}", res)))
+            div {
+                display: "flex",
+                flex_direction: "row",
+                background_color: "lightyellow",
+                padding: "10px",
+
+                // Conversation List
+                div {
+                    background_color: "lightblue",
+                    padding: "10px",
+
+                    for i in 0..convo_lis.len() {
+                        div {
+                            button { 
+                                onclick: move |_| {
+                                    convo_idx.set(i);
+                                },
+                                span {
+                                    display: "block",
+                                    "{convo_lis[i].title}"
+                                },
+                                span {
+                                    display: "block",
+                                    "{convo_lis[i].model}"
+                                },
                             }
                         }
-                    });
-                },
-                "Go"
-            }
+                    }
+                }
 
-            if let Some(msg) = response() {
-                div { "{msg}" }
+                div {
+                    display: "flex",
+                    flex_direction: "column",
+                    background_color: "lightgreen",
+                    padding: "10px",
+
+                    // Current Conversation
+                    div {
+                        background_color: "lightyellow",
+                        padding: "10px",
+
+                        if convo_lis[convo_idx()].new == false {
+                            for x in convo_cur {
+                                if x.role == "assistant" {
+                                    div {
+                                        background_color: "lightpink",
+                                        padding: "10px",
+
+                                        div {
+                                            "OpenAI"
+                                        }
+                                        div {  
+                                            padding_left: "20px",
+                                            "{x.content}"
+                                        }
+                                    }
+                                } else {
+                                    div {
+                                        background_color: "lightblue",
+                                        padding: "10px",
+
+                                        div {
+                                            "You"
+                                        }
+                                        div {  
+                                            padding_left: "20px",
+                                            "{x.content}"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if streaming() {
+                            if let Some(msg) = response() {
+                                div { 
+                                    background_color: "lightgreen",
+                                    padding: "10px",
+
+                                    div {
+                                        "Openai"
+                                    }
+                                    div {
+                                        padding_left: "20px",
+                                        "{msg}" 
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Prompt Box
+                    div {  
+                        background_color: "lightpink",
+                        padding: "10px",
+
+                        input {  
+                            type: "text",
+                            value: "{input}",
+                            oninput: move |event| input.set(event.value().to_string())
+                        }
+
+                        button {
+                            onclick: move |_| {
+                                response.set(None);
+                                streaming.set(true);
+                                let prompt = input().clone();
+                                let api_key = openai_api_key.clone();
+                                let openai_model = openai_model();
+                                let openai_path = convo_lis[convo_idx()].file.clone();
+                                let new = convo_lis[convo_idx()].new.clone();
+                                input.set(String::new());
+                                spawn({
+                                    let mut response = response.clone();
+                                    async move {
+                                        match call_openai(response, &api_key, openai_model, &prompt, openai_path.as_str(), new, streaming).await {
+                                            Ok(_) => (),
+                                            Err(res) => response.set(Some(format!("Error: {}", res)))
+                                        }
+                                    }
+                                });
+                            },
+                            "Go"
+                        }
+
+                        div { "{openai_model}" }
+                        div {
+                            for model in openai_model_lis {
+                                button {
+                                    onclick: move |_| {
+                                        openai_model.set(model);
+                                    },
+                                    "{model}"
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
 }
 
-pub async fn call_openai(mut response: Signal<Option<String>>, api_key: &str, model: &str, prompt: &str, path: &str, new: bool) -> Result<String, String> {
+pub async fn call_openai(mut response: Signal<Option<String>>, api_key: &str, model: &str, prompt: &str, path: &str, new: bool, mut streaming: Signal<bool>) -> Result<String, String> {
     // Clear response
     response.set(Some(String::new()));
 
@@ -90,6 +260,7 @@ pub async fn call_openai(mut response: Signal<Option<String>>, api_key: &str, mo
 
                 // Check if LLM response finished
                 if data.trim() == "[DONE]" {
+                    streaming.set(false);
 
                     // Save LLM response
                     let response_opt_str = response.read();
@@ -163,4 +334,14 @@ fn json_modify_openai(path: &str, role: &str, prompt: &str) -> Result<(), String
         .map_err(|e| format!("Failed to write file: {}", e))?;
 
     Ok(())
+}
+
+fn table_openai() -> Vec<ConvoStruct> {
+    let data = fs::read_to_string("assets/convo/openai/openai_table.json")
+        .map_err(|e| format!("Failed to read file: {}", e)).unwrap();
+
+    let json_data: ConvoStructVec = serde_json::from_str(&data)
+        .map_err(|e| format!("Failed to parse JSON: {}", e)).unwrap();
+
+    return json_data.conversations
 }

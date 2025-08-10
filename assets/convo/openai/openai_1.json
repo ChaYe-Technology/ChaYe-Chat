@@ -1,0 +1,14 @@
+{
+  "model": "gpt-5-nano-2025-08-07",
+  "stream": true,
+  "messages": [
+    {
+      "role": "user",
+      "content": "Hello"
+    },
+    {
+      "role": "assistant",
+      "content": "Hi there! How can I help today? I can explain concepts, answer questions, help with writing or editing, assist with coding, brainstorm ideas, plan something, or just chat. Tell me what you’d like to do or ask about, and we’ll take it from there."
+    }
+  ]
+}

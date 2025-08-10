@@ -1,14 +1,14 @@
 {
-  "model": "o4-mini-2025-04-16",
+  "model": "gpt-5-nano",
   "stream": true,
   "messages": [
     {
       "role": "user",
-      "content": "what is 1 + 1"
+      "content": "hello"
     },
     {
       "role": "assistant",
-      "content": "2"
+      "content": "Hello! Nice to meet you. How can I help today? I can explain concepts, help with homework, write or edit text brainstorm ideas, or just chat. Tell me what you’d like to do, or a topic you’re interested in."
     }
   ]
 }

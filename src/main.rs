@@ -1,4 +1,4 @@
-use dioxus::{html::div, prelude::*};
+use dioxus::prelude::*;
 
 mod api_openai;
 mod api_anthropic;
@@ -10,50 +10,59 @@ fn main() {
 
 #[component]
 fn App() -> Element {
-
-    // let deepseek_api_key = "Deepseek API Key";
-    // let deepseek_model = "deepseek-reasoner";
-
-    // let anthropic_api_key = "Anthropic API Key";
-    // let anthropic_model = "claude-opus-4-20250514";
-
-    // let mut prompt = use_signal(|| String::new());
-    // let mut response = use_signal(|| None as Option<String>);
-
-    // let mut x = use_signal(|| 1);
-
     let mut llm_select = use_signal(|| None as Option<&str>);
 
     rsx! {
         div {
-            button {
-                onclick: move |_| {
-                    llm_select.set(Some("OpenAI"));
-                },
-                "OpenAI"
+            display: "flex",
+            flex_direction: "row",
+            background_color: "lightblue",
+            padding: "10px",
+
+            div {
+                display: "flex",
+                flex_direction: "column",
+                background_color: "lightgreen",
+                padding: "10px",
+
+                button {
+                    padding: "10px",
+
+                    onclick: move |_| {
+                        llm_select.set(Some("OpenAI"));
+                    },
+                    "OpenAI"
+                }
+                button {
+                    padding: "10px",
+
+                    onclick: move |_| {
+                        llm_select.set(Some("Deepseek"));
+                    },
+                    "Deepseek"
+                }
+                button {
+                    padding: "10px",
+
+                    onclick: move |_| {
+                        llm_select.set(Some("Anthropic"));
+                    },
+                    "Anthropic"
+                }
             }
-            button {
-                onclick: move |_| {
-                    llm_select.set(Some("Deepseek"));
-                },
-                "Deepseek"
-            }
-            button {
-                onclick: move |_| {
-                    llm_select.set(Some("Anthropic"));
-                },
-                "Anthropic"
-            }
-        }
-        div {
-            if llm_select() == None {
-                "Hello"
-            } else if llm_select() == Some("OpenAI") {
-                api_openai::gui_openai {  }
-            } else if llm_select() == Some("Deepseek") {
-                api_deepseek::gui_deepseek {  }
-            } else if llm_select() == Some("Anthropic") {
-                api_anthropic::gui_anthropic {  }
+            div {
+                background_color: "lightyellow",
+                padding: "10px",
+
+                if llm_select() == None {
+                    "Hello"
+                } else if llm_select() == Some("OpenAI") {
+                    api_openai::gui_openai {  }
+                } else if llm_select() == Some("Deepseek") {
+                    api_deepseek::gui_deepseek {  }
+                } else if llm_select() == Some("Anthropic") {
+                    api_anthropic::gui_anthropic {  }
+                }
             }
         }
     }

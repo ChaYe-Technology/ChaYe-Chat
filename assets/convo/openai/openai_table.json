@@ -1,10 +1,29 @@
 {
-  "cur_num": 1,
-  "file": [
+  "cur_num": 4,
+  "conversations": [
     {
-      "num": 1,
-      "file": "/1.json",
-      "title": "Hello"
+      "file": "assets/convo/openai/openai_4.json",
+      "title": "New",
+      "model": "",
+      "new": true
+    },
+    {
+      "file": "assets/convo/openai/openai_3.json",
+      "title": "hello, my name is bob",
+      "model": "gpt-5-nano-2025-08-07",
+      "new": false
+    },
+    {
+      "file": "assets/convo/openai/openai_2.json",
+      "title": "Hello Again",
+      "model": "gpt-5-nano-2025-08-07",
+      "new": false
+    },
+    {
+      "file": "assets/convo/openai/openai_1.json",
+      "title": "Hello",
+      "model": "gpt-5-nano-2025-08-07",
+      "new": false
     }
   ]
 }

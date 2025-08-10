@@ -1,0 +1,14 @@
+{
+  "model": "gpt-5-nano-2025-08-07",
+  "stream": true,
+  "messages": [
+    {
+      "role": "user",
+      "content": "hello, my name is bob"
+    },
+    {
+      "role": "assistant",
+      "content": "Hi Bob! Nice to meet you. How can I help today? If you tell me what you working on or what you’d like to do (answer a question, write/edit something, plan something, learn about a topic, etc.), I’ll jump right in. And would you prefer I call you Bob or would you like a different name?"
+    }
+  ]
+}
